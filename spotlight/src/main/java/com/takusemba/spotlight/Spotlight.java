@@ -26,7 +26,7 @@ import java.util.Arrays;
 public class Spotlight {
 
     @ColorRes
-    private static final int DEFAULT_OVERLAY_COLOR = R.color.background;
+    private static final int DEFAULT_OVERLAY_COLOR = com.takusemba.spotlight.R.color.background;
     private static final long DEFAULT_DURATION = 1000L;
     private static final TimeInterpolator DEFAULT_ANIMATION = new DecelerateInterpolator(2f);
 
@@ -143,6 +143,16 @@ public class Spotlight {
         spotlightView();
     }
 
+    private int currentTarget = 0;
+
+    public void showTarget(int pos) {
+        if (pos >= 0 && pos < targets.size() &&
+                getSpotlightView() != null) {
+            currentTarget = pos;
+            startTarget();
+        }
+    }
+
     /**
      * close the current {@link Target}
      */
@@ -185,7 +195,7 @@ public class Spotlight {
     @SuppressWarnings("unchecked")
     private void startTarget() {
         if (targets != null && targets.size() > 0 && getSpotlightView() != null) {
-            final Target target = targets.get(0);
+            final Target target = targets.get(currentTarget);
             SpotlightView spotlightView = getSpotlightView();
             spotlightView.removeAllViews();
             spotlightView.addView(target.getOverlay());
@@ -226,9 +236,10 @@ public class Spotlight {
                 @Override
                 public void onAnimationEnd(Animator animation) {
                     if (!targets.isEmpty()) {
-                        Target target = targets.remove(0);
+                        Target target = targets.get(currentTarget);
+                        currentTarget++;
                         if (target.getListener() != null) target.getListener().onEnded(target);
-                        if (targets.size() > 0) {
+                        if (targets.size() > 0 && currentTarget < targets.size()) {
                             startTarget();
                         } else {
                             finishSpotlight();
