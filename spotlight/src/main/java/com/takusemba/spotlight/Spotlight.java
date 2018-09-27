@@ -145,11 +145,25 @@ public class Spotlight {
 
     private int currentTarget = 0;
 
-    public void showTarget(int pos) {
-        if (pos >= 0 && pos < targets.size() &&
-                getSpotlightView() != null) {
-            currentTarget = pos;
-            startTarget();
+    interface GetPositionToShow {
+        int targetFinishGetNext();
+    }
+
+    public void showTarget(final GetPositionToShow listener) {
+        hideTargetWithAnimation(new AbstractAnimatorListener() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                int position = listener.targetFinishGetNext();
+                checkPositionToShow(position);
+                currentTarget = position;
+                startTarget();
+            }
+        });
+    }
+
+    private void checkPositionToShow(int pos) {
+        if (pos < 0 || pos >= targets.size()) {
+            throw new IllegalArgumentException("Illegal target position");
         }
     }
 
@@ -231,22 +245,26 @@ public class Spotlight {
      */
     @SuppressWarnings("unchecked")
     private void finishTarget() {
-        if (targets != null && targets.size() > 0 && getSpotlightView() != null) {
-            getSpotlightView().turnDown(new AbstractAnimatorListener() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    if (!targets.isEmpty()) {
-                        Target target = targets.get(currentTarget);
-                        currentTarget++;
-                        if (target.getListener() != null) target.getListener().onEnded(target);
-                        if (targets.size() > 0 && currentTarget < targets.size()) {
-                            startTarget();
-                        } else {
-                            finishSpotlight();
-                        }
+        hideTargetWithAnimation(new AbstractAnimatorListener() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                if (!targets.isEmpty()) {
+                    Target target = targets.get(currentTarget);
+                    currentTarget++;
+                    if (target.getListener() != null) target.getListener().onEnded(target);
+                    if (targets.size() > 0 && currentTarget < targets.size()) {
+                        startTarget();
+                    } else {
+                        finishSpotlight();
                     }
                 }
-            });
+            }
+        });
+    }
+
+    private void hideTargetWithAnimation(AbstractAnimatorListener listener) {
+        if (targets != null && targets.size() > 0 && getSpotlightView() != null) {
+            getSpotlightView().turnDown(listener);
         }
     }
 
