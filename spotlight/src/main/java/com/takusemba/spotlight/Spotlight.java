@@ -145,7 +145,7 @@ public class Spotlight {
 
     private int currentTarget = 0;
 
-    interface GetPositionToShow {
+    public interface GetPositionToShow {
         int targetFinishGetNext();
     }
 
